@@ -2,7 +2,11 @@
 
 ## Overview
 
-This project uses a Next.js 15 App Router-based internationalization (i18n) system with support for multiple languages: English (en), Dutch (nl), Russian (ru), and Ukrainian (ua).
+This project uses a comprehensive, type-safe Next.js 15 App Router-based internationalization (i18n) system with SSR (Server-Side Rendering) support for multiple languages: English (en), Dutch (nl), Russian (ru), and Ukrainian (ua).
+
+The system provides two levels of translation support:
+1. **Simple Dictionaries** - For basic page content (home page, UI elements)
+2. **Comprehensive Locale Data** - For detailed content (soft, facades, about, common sections)
 
 ## Architecture
 
@@ -16,16 +20,48 @@ export const i18n = {
 ```
 
 ### 2. Dictionary System (`src/dictionaries/`)
-Each locale has its own JSON file containing translations:
+
+#### Type-Safe Dictionary Types (`types.ts`)
+All dictionaries are strictly typed for TypeScript safety:
+```typescript
+export type Dictionary = {
+  home: { getStarted: string; saveChanges: string; ... }
+  products: { cart: string }
+}
+
+export type LocaleData = {
+  common: any
+  soft: any
+  facades: any
+  about: any
+}
+```
+
+#### Simple Dictionaries
+Each locale has its own JSON file containing basic translations:
 - `en.json` - English translations
 - `nl.json` - Dutch translations
 - `ru.json` - Russian translations
 - `ua.json` - Ukrainian translations
 
-The `dictionaries.ts` file provides a function to load the appropriate dictionary:
+#### Comprehensive Locale Data (`locales/` directory)
+Extensive translations organized by section:
+- `common.json` - Common UI elements, headers, forms
+- `soft.json` - 3D solutions and software products
+- `facades.json` - Ventilated facades content
+- `about.json` - About company information
+
+#### Dictionary Loaders (`dictionaries.ts`)
+
+**For simple pages:**
 ```typescript
-export const getDictionary = async (locale: 'en' | 'nl' | 'ru' | 'ua') =>
-    dictionaries[locale]?.()
+export const getDictionary = async (locale: Locale): Promise<Dictionary>
+```
+
+**For comprehensive pages:**
+```typescript
+export const getFullDictionary = async (locale: Locale)
+// Returns both simple dictionary + all locale data
 ```
 
 ### 3. Middleware (`middleware.ts`)
@@ -39,19 +75,42 @@ Uses Next.js dynamic segments to handle locale-specific pages:
 - `[lang]/page.tsx` - Localized home page
 - `[lang]/layout.tsx` - Sets the HTML lang attribute
 
-## How It Works
+## How It Works (SSR Translation Flow)
 
-1. User visits the root URL (`/`)
-2. Middleware detects their preferred language
-3. User is redirected to `/{locale}/` (e.g., `/ru/`, `/ua/`, `/en/`)
-4. The page loads the appropriate dictionary
-5. All text content is displayed in the selected language
+1. **Request:** User visits the root URL (`/`)
+2. **Middleware:** Detects preferred language from `Accept-Language` header
+3. **Redirect:** User is redirected to `/{locale}/` (e.g., `/ru/`, `/ua/`, `/en/`)
+4. **Server-Side Rendering:**
+   - Next.js App Router receives the locale parameter
+   - Page component calls `getDictionary(lang)` or `getFullDictionary(lang)`
+   - Dictionary is loaded server-side before HTML generation
+   - Type-safe access to translations with full IntelliSense
+5. **Response:** Fully translated HTML is sent to the client (SSR)
+6. **Hydration:** React hydrates the pre-rendered content
+
+### Benefits of this SSR Approach:
+- ✅ **No Flash of Untranslated Content (FOUT)** - Content arrives already translated
+- ✅ **SEO Friendly** - Search engines see translated content
+- ✅ **Type Safe** - Full TypeScript support with autocomplete
+- ✅ **Performance** - Translations loaded in parallel with other data
+- ✅ **Zero Client-Side JavaScript** for translations - All handled server-side
 
 ## Adding New Translations
 
-### For Existing Pages
+### For Simple Pages (Basic Content)
 
-1. Add new keys to all dictionary files:
+1. Update the `Dictionary` type in `src/dictionaries/types.ts`:
+```typescript
+export type Dictionary = {
+  home: {
+    getStarted: string
+    newKey: string  // Add new key
+  }
+  // ...
+}
+```
+
+2. Add translations to all dictionary files:
 ```json
 // src/dictionaries/ru.json
 {
@@ -61,10 +120,42 @@ Uses Next.js dynamic segments to handle locale-specific pages:
 }
 ```
 
-2. Use in your components:
+3. Use in your components (with type safety!):
 ```typescript
-const dict = await getDictionary(lang)
-<p>{dict?.home.newKey}</p>
+export default async function Page({ params }: { params: Promise<{ lang: Locale }> }) {
+    const {lang} = await params;
+    const dict: Dictionary = await getDictionary(lang)
+
+    return <p>{dict.home.newKey}</p>  // TypeScript autocomplete works!
+}
+```
+
+### For Comprehensive Pages (Detailed Content)
+
+1. Add content to all locale files in `locales/{locale}/`:
+```json
+// locales/ru/soft.json
+{
+  "newProduct": {
+    "title": "Новый продукт",
+    "description": "Описание"
+  }
+}
+```
+
+2. Use `getFullDictionary` in your page:
+```typescript
+export default async function SoftPage({ params }: { params: Promise<{ lang: Locale }> }) {
+    const {lang} = await params;
+    const dict = await getFullDictionary(lang)
+
+    return (
+        <div>
+            <h1>{dict.locale.soft.newProduct.title}</h1>
+            <p>{dict.locale.soft.newProduct.description}</p>
+        </div>
+    )
+}
 ```
 
 ### For New Languages
@@ -115,14 +206,66 @@ const dictionaries = {
 - `/ua/` → Ukrainian version
 - `/nl/` → Dutch version
 
+## Example Pages
+
+### Simple Page (Home)
+Location: `src/app/[lang]/page.tsx`
+- Uses: `getDictionary(lang)`
+- Content: Basic UI elements
+- Example: `/ru/`, `/ua/`, `/en/`
+
+### Comprehensive Page (Soft)
+Location: `src/app/[lang]/soft/page.tsx`
+- Uses: `getFullDictionary(lang)`
+- Content: Detailed product information
+- Example: `/ru/soft`, `/ua/soft`, `/en/soft`
+
 ## Testing
 
-To test different locales:
-1. Visit `http://localhost:3000/ru/` for Russian
-2. Visit `http://localhost:3000/ua/` for Ukrainian
-3. Visit `http://localhost:3000/en/` for English
-4. Visit `http://localhost:3000/nl/` for Dutch
+### Local Development
+```bash
+npm run dev
+```
 
-## Additional Resources
+Visit different locales:
+1. `http://localhost:3000/ru/` - Russian home page
+2. `http://localhost:3000/ua/` - Ukrainian home page
+3. `http://localhost:3000/en/` - English home page
+4. `http://localhost:3000/nl/` - Dutch home page
+5. `http://localhost:3000/ru/soft` - Russian soft page (comprehensive example)
+6. `http://localhost:3000/ua/soft` - Ukrainian soft page
 
-The project also contains a separate `locales/` directory with more comprehensive translations for other parts of the application. These can be integrated with the dictionary system as needed.
+### Build Test
+```bash
+npm run build
+npm start
+```
+
+## Best Practices
+
+1. **Always use type-safe approach:**
+   ```typescript
+   const dict: Dictionary = await getDictionary(lang)  // ✅ Good
+   const dict = await getDictionary(lang)              // ⚠️ Loses type safety
+   ```
+
+2. **Choose the right loader:**
+   - Use `getDictionary()` for simple UI text
+   - Use `getFullDictionary()` for content-heavy pages
+
+3. **Avoid optional chaining:**
+   ```typescript
+   {dict.home.title}   // ✅ Good - types guarantee it exists
+   {dict?.home?.title} // ❌ Unnecessary - adds runtime overhead
+   ```
+
+4. **Keep translations organized:**
+   - Simple UI text → `src/dictionaries/`
+   - Comprehensive content → `locales/{locale}/`
+
+## Performance Characteristics
+
+- **Initial Load:** All dictionaries loaded server-side in parallel
+- **Route Changes:** Dictionaries cached per locale (no reload needed)
+- **Bundle Size:** Translations not included in client bundle
+- **Rendering:** Fully rendered HTML with translations (SSR)

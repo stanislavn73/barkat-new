@@ -13,16 +13,21 @@ const dictionaries = {
 const loadLocaleData = async (locale: Locale): Promise<LocaleData> => {
     try {
         const [common, soft, facades, about] = await Promise.all([
-            import(`../../locales/${locale}/common.json`).then(m => m.default).catch(() => ({})),
-            import(`../../locales/${locale}/soft.json`).then(m => m.default).catch(() => ({})),
-            import(`../../locales/${locale}/facades.json`).then(m => m.default).catch(() => ({})),
-            import(`../../locales/${locale}/about.json`).then(m => m.default).catch(() => ({})),
+            import(`../../locales/${locale}/common.json`).then(m => m.default as LocaleData['common']).catch(() => ({} as LocaleData['common'])),
+            import(`../../locales/${locale}/soft.json`).then(m => m.default as LocaleData['soft']).catch(() => ({} as LocaleData['soft'])),
+            import(`../../locales/${locale}/facades.json`).then(m => m.default as LocaleData['facades']).catch(() => ({} as LocaleData['facades'])),
+            import(`../../locales/${locale}/about.json`).then(m => m.default as LocaleData['about']).catch(() => ({} as LocaleData['about'])),
         ])
 
         return {common, soft, facades, about}
     } catch (error) {
         console.error(`Failed to load locale data for ${locale}:`, error)
-        return {common: {}, soft: {}, facades: {}, about: {}}
+        return {
+            common: {} as LocaleData['common'],
+            soft: {} as LocaleData['soft'],
+            facades: {} as LocaleData['facades'],
+            about: {} as LocaleData['about']
+        }
     }
 }
 

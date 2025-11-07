@@ -55,10 +55,10 @@ export default async function SoftPage({
                         {soft.xPick.modal?.advantages && (
                             <div className="mb-8">
                                 <h3 className="text-xl font-semibold mb-4">
-                                    {soft.xPick.modal.keys?.find((k: any) => k.key === 'advantages')?.title || 'Advantages'}
+                                    {soft.xPick.modal.keys?.find((k) => k.key === 'advantages')?.title || 'Advantages'}
                                 </h3>
                                 <ul className="list-disc list-inside space-y-3">
-                                    {soft.xPick.modal.advantages.map((advantage: string, index: number) => (
+                                    {soft.xPick.modal.advantages.map((advantage, index) => (
                                         <li key={index} className="leading-relaxed">{advantage}</li>
                                     ))}
                                 </ul>
@@ -68,10 +68,10 @@ export default async function SoftPage({
                         {soft.xPick.modal?.useCases && (
                             <div className="mb-8">
                                 <h3 className="text-xl font-semibold mb-4">
-                                    {soft.xPick.modal.keys?.find((k: any) => k.key === 'useCases')?.title || 'Use Cases'}
+                                    {soft.xPick.modal.keys?.find((k) => k.key === 'useCases')?.title || 'Use Cases'}
                                 </h3>
                                 <ul className="list-disc list-inside space-y-3">
-                                    {soft.xPick.modal.useCases.map((useCase: string, index: number) => (
+                                    {soft.xPick.modal.useCases.map((useCase, index) => (
                                         <li key={index} className="leading-relaxed">{useCase}</li>
                                     ))}
                                 </ul>
@@ -81,10 +81,10 @@ export default async function SoftPage({
                         {soft.xPick.modal?.benefits && (
                             <div className="mb-8">
                                 <h3 className="text-xl font-semibold mb-4">
-                                    {soft.xPick.modal.keys?.find((k: any) => k.key === 'benefits')?.title || 'Benefits'}
+                                    {soft.xPick.modal.keys?.find((k) => k.key === 'benefits')?.title || 'Benefits'}
                                 </h3>
                                 <ul className="list-disc list-inside space-y-3">
-                                    {soft.xPick.modal.benefits.map((benefit: string, index: number) => (
+                                    {soft.xPick.modal.benefits.map((benefit, index) => (
                                         <li key={index} className="leading-relaxed">{benefit}</li>
                                     ))}
                                 </ul>
